@@ -16,7 +16,7 @@
 	}
 
 	function changeClass(elems,cname,add) {
-		var els = factory.util.parseEls(elems);
+		var els = factory.util.arrify(elems);
 		if (Array.isArray(cname)) { factory.util.each(cname,function(cn){ changeClass(els,cn,add) }); return els; }
 
 		/*Where the fun begins*/
@@ -30,7 +30,7 @@
 	}
 
 	function hasClass(elems,cname){
-		var el = factory.util.parseEls(elems)[0];
+		var el = factory.util.arrify(elems)[0];
 		if (!el) return false;
 
 		if (!el.nodeType) throw new TypeError("Element is not a node");
