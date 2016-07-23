@@ -12,6 +12,7 @@
 		-	ancestor: returns parent or ancestor matching query
 		-	html	: gets or sets element innerHTML;
 		-	on		: sets event listener
+		- 	delegate: sets event listener, with delegation
 
 */
 (function(factory){
@@ -57,7 +58,14 @@
 				if (value !== undefined) element.innerHTML = value;
 				else return element.innerHTML;
 			},
-		on:   function(element,event,callback) { element.addEventListener(event,callback); }
+		on:   function(element,event,callback) { element.addEventListener(event,callback); },
+		delegate: function(element,child,event,callback) {
+			element.addEventListener(event,function(e){
+				if (e.target.matches(child)) {
+					callback(e);
+				}
+			});
+		}
 	});
 
 	factory.extendFn(	{ attr: factory.dom.attr },
