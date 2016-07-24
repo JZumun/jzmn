@@ -65,23 +65,22 @@ var jzmn = (function(old_jzmn){
 				var output;
 				switch(options.input) {
 					case "array":
-						output = flatten(obj[method].bind(null,this.els).apply(null,args) || this.els);
+						output = flatten(obj[method].bind(null,this.els).apply(null,args));
 						break;
 					case "single":
-						output = flatten(obj[method].bind(null,this.el).apply(null,args) || this.els);
+						output = flatten(obj[method].bind(null,this.el).apply(null,args));
 						break;
 					case "individual":
 					default:
 						output = flatten(this.els.map(function(el){
-							var out = obj[method].bind(null,el).apply(null,args);
-							return (out !== undefined) ?  out : el;
+							return obj[method].bind(null,el).apply(null,args);
 						}));
 				}
 				return {
-					"wrapped": factory(output),
+					"wrapped": factory(output || this.els),
 					"bare": output.length > 1 ? output : output[0],
 					"self": factory(this.els),
-					"bare || self": (output === undefined) ? factory(this.els) : output.length > 1 ? output : output[0]
+					"bare || self": (output.every(function(el){ return el === undefined; })) ? factory(this.els) : output.length > 1 ? output : output[0]
 				}[options.output];
 			}
 		});

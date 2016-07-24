@@ -55,7 +55,7 @@
 
 	factory.extendFactory("dom",{
 		attr: function(element,attribute,value) {
-			if (value !== undefined) return (value === null) ? element.removeAttribute(attribute) : element.setAttribute(attribute,value);			
+			if (value !== undefined) (value === null) ? element.removeAttribute(attribute) : element.setAttribute(attribute,value);			
 			else return element.getAttribute(attribute);
 		},
 		matches: function(element,query) {
