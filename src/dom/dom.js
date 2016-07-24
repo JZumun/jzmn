@@ -59,13 +59,6 @@
 				else return element.innerHTML;
 			},
 		on:   function(element,event,callback) { element.addEventListener(event,callback); },
-		delegate: function(element,child,event,callback) {
-			element.addEventListener(event,function(e){
-				if (e.target.matches(child)) {
-					callback(e);
-				}
-			});
-		}
 	});
 
 	factory.extendFn(	{ attr: factory.dom.attr },
