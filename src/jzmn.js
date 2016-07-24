@@ -80,6 +80,8 @@ var jzmn = (function(old_jzmn){
 				return {
 					"wrapped": factory(output),
 					"bare": output.length > 1 ? output : output[0],
+					"self": factory(this.els),
+					"bare || self": (output === undefined) ? factory(this.els) : output
 				}[options.output];
 			}
 		});
