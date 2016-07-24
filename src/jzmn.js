@@ -81,7 +81,7 @@ var jzmn = (function(old_jzmn){
 					"wrapped": factory(output),
 					"bare": output.length > 1 ? output : output[0],
 					"self": factory(this.els),
-					"bare || self": (output === undefined) ? factory(this.els) : output
+					"bare || self": (output === undefined) ? factory(this.els) : output.length > 1 ? output : output[0]
 				}[options.output];
 			}
 		});
