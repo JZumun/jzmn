@@ -35,14 +35,14 @@
 
     factory.el = document.querySelector.bind(document);
     factory.els = document.querySelectorAll.bind(document);
-	factory.parser = function(el) {
+    factory.setParser("dom",function(el) {
 		return    !el ? []
 				: Array.isArray(el) ? el
 				: el.nodeType ? [el]
 				: isNodeList(el) ? arr.slice.call(el)
 				: isString(el) ? arr.slice.call(document.querySelectorAll(el))
 				: [el];
-	}
+	})
 
 	factory.extendFactory("dom",{
 		attr: function(element,attribute,value) {

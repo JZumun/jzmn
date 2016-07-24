@@ -38,13 +38,21 @@ var jzmn = (function(old_jzmn){
 
 	var factory = function(obj,parser) {
 		var j = Object.create(factory.fn);
-		j.els = (typeof parser === "function") ? parser(obj) : factory.parser(obj);
+		j.els = (typeof parser === "function") ? parser(obj) : parse(obj);
 		j.el = j.els[0];
 		return j;
 	};
 
 	factory.fn = {};
-	factory.parser = arrify;
+
+	var parse = null;
+	var parsers = {};
+	factory.setParser = function(name,fn) { 
+		if (fn) { parsers[name] = fn; }
+		parse = parsers[name];
+	}
+	factory.setParser("default",arrify);
+
 	factory.extendFn = function(obj,opts) {
 		var options = Object.assign({
 			input: "individual",
@@ -84,6 +92,7 @@ var jzmn = (function(old_jzmn){
 		Object.keys(factory.extendFn(obj,opts)).forEach(function(fn,i){
 			curr[fn] = obj[fn];
 		});
+		return factory;
 	}
 
 
