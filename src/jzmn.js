@@ -23,7 +23,6 @@ var jzmn = (function(old_jzmn){
 	var arr = Array.prototype;	
 	var arrify = function(el) {
 		return (el === undefined || el === null) ? []
-			: Array.isArray(el) ? el
 			: el.length ? arr.slice.call(el)
 			: [el];
 	};
