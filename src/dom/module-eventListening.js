@@ -35,10 +35,7 @@
 	var off = function(element,event,callback) {
 		if (callback) {
 			element.removeEventListener(event,callback);
-			return;
-		} 
-
-		getEventListeners(element,event).forEach(function(cb){
+		} else getEventListeners(element,event).forEach(function(cb){
 			element.removeEventListener(event,cb);
 		});
 	}
