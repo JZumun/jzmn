@@ -83,7 +83,6 @@ var jzmn = (function(old_jzmn){
 				}[options.output];
 			}
 		});
-
 		return obj;
 	}
 	factory.extendFactory = function(name,obj,opts) {
@@ -94,6 +93,12 @@ var jzmn = (function(old_jzmn){
 		});
 		return factory;
 	}
+
+	factory..extendFn({
+		callMethod: function(el,methodName) {
+			return el[methodName].apply(el,arr.splice.call(arguments,2));
+		}
+	})
 
 
 	var iterator = function (method) {

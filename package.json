@@ -1,0 +1,31 @@
+{
+  "name": "jzmn",
+  "version": "0.8.0",
+  "description": "Personal experimental utility library.",
+  "main": "dist/jzmn.js",
+  "scripts": {
+    "build": "browserify src/core/jzmn.js -o dist/jzmn.es6.js --s jzmn",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JZumun/jzmn.git"
+  },
+  "author": "Rein Bulaong",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JZumun/jzmn/issues"
+  },
+  "homepage": "https://github.com/JZumun/jzmn#readme",
+  "devDependencies": {
+    "babel-preset-latest": "^6.16.0",
+    "babelify": "^7.3.0",
+    "browserify": "^13.1.0",
+    "grunt": "^1.0.1",
+    "rollupify": "^0.3.4",
+    "uglify": "^0.1.5",
+    "grunt-browserify": "^5.0.0",
+    "grunt-contrib-uglify": "^2.0.0",
+    "grunt-contrib-watch": "^1.0.0"
+  }
+}
