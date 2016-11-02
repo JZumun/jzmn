@@ -32,7 +32,7 @@ const generateExtendFn = ({
 			wrapper.fn[methodName] = function(...args) {
 				const inputValue = arrify(this.value);
 				let outputValue = calcValue( method, inputValue, args );
-				return wrapValue( this.wrapper, outputValue, this );
+				return wrapValue( this.__wrapper__, outputValue, this );
 			}
 		});
 

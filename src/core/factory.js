@@ -7,7 +7,7 @@ const initializeWrapper = function(wrapper,oldVersion) {
 
 	wrapper.branch = factory;
 	wrapper.fn = clone(oldVersion.fn);
-	wrapper.fn.wrapper = wrapper;
+	wrapper.fn.__wrapper__ = wrapper;
 	initializeExtenders(wrapper,oldVersion);
 	wrapper.extendFn({
 		invoke: (el,methodName,...args) => {
