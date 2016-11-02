@@ -182,25 +182,17 @@ var initializeWrapper = function initializeWrapper(wrapper, oldVersion) {
 	wrapper.fn = clone(oldVersion.fn);
 	wrapper.fn.__wrapper__ = wrapper;
 	initializeExtenders(wrapper, oldVersion);
-	wrapper.extendFn({
-		invoke: function invoke(el, methodName) {
-			for (var _len3 = arguments.length, args = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
-				args[_key3 - 2] = arguments[_key3];
-			}
-
-			return el[methodName].apply(el, args);
-		}
-	});
-
 	return wrapper;
 };
 
 /* FACTORY FUNCTION */
-var factory = function factory(_ref2) {
+var factory = function factory() {
+	var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
 	var _ref2$parser = _ref2.parser;
 	var parser = _ref2$parser === undefined ? id : _ref2$parser;
 	var _ref2$oldVersion = _ref2.oldVersion;
-	var oldVersion = _ref2$oldVersion === undefined ? {} : _ref2$oldVersion;
+	var oldVersion = _ref2$oldVersion === undefined ? this || {} : _ref2$oldVersion;
 
 	var wrapper = function wrapper(value) {
 		var parse = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : parser;
@@ -214,7 +206,13 @@ var factory = function factory(_ref2) {
 
 var jzmn = factory({ parser: arrify, oldVersion: self.jzmn });
 
-jzmn.extendFn({ at: function at(list, n) {
+jzmn.extendFn({ invoke: function invoke(el, methodName) {
+		for (var _len3 = arguments.length, args = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
+			args[_key3 - 2] = arguments[_key3];
+		}
+
+		return el[methodName].apply(el, args);
+	} }).extendFn({ at: function at(list, n) {
 		return list[n];
 	} }, { input: "array" }).extendFn({ prop: function prop(el, p) {
 		return el[p];

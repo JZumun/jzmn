@@ -4,7 +4,8 @@ import { arrify, flatten } from "./_utils";
 
 const jzmn = factory({parser: arrify, oldVersion: self.jzmn});
 
-jzmn.extendFn({ at: (list,n) => list[n]}, {input: "array"})
+jzmn.extendFn({ invoke: (el,methodName,...args) => el[methodName].apply(el,args)})
+	.extendFn({ at: (list,n) => list[n]},{input: "array"})
 	.extendFn({ prop: (el,p) => el[p] },  {input: "individual", output:"bare"});
 
 jzmn.extendWrapper("util",{
