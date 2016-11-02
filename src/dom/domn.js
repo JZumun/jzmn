@@ -14,18 +14,7 @@ const domn = jzmn.branch({oldVersion: jzmn, parser: function(el) {
 		: isNodeList(el) ? arr.slice.call(el)
 		: isString(el) ? arr.slice.call( document.querySelectorAll(el) )
 		: [el];
-}});  
-
-domn.extendFn({ 
-	at: (list,n) => list[n]
-},{ input: "array" });
-domn.extendFn({ prop: (el,p) => el[p] },{input: "individual", output:"bare"})
-domn.extendWrapper("util",{
-	flatten, arrify
-});
-domn.extendWrapper("util",{
-	each, map, filter, reduce
-},{input: "array"})
+}});
 
 domn.extendWrapper("dom",{
 	find: (el,child) => arrify(el.querySelectorAll(child)),

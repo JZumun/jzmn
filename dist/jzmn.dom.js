@@ -34,7 +34,7 @@ var equals = function equals(thing) {
 		return x === thing;
 	};
 };
-var isFunction$1 = function isFunction$1(n) {
+var isFunction = function isFunction(n) {
 	return Object.prototype.toString.call(n) == '[object Function]';
 };
 
@@ -80,84 +80,98 @@ var reduce = function reduce(el, fn, def) {
 };
 
 //Function to add behavior to wrapper instance.
-var extendFn = function extendFn(wrapper, methods, opts) {
-	var extender = wrapper.extendFn;
+var generateExtendFn = function generateExtendFn() {
+	var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	var _clone = clone(extender.defaults, opts);
+	var _ref$oldDefaults = _ref.oldDefaults;
+	var oldDefaults = _ref$oldDefaults === undefined ? {
+		input: "individual",
+		output: "wrapped"
+	} : _ref$oldDefaults;
+	var _ref$oldInputParser = _ref.oldInputParser;
+	var oldInputParser = _ref$oldInputParser === undefined ? {
+		"array": function array(method, input, args) {
+			return flatten(method.call.apply(method, [null, input].concat(_toConsumableArray(args))) || input);
+		},
+		"single": function single(method, input, args) {
+			return flatten(method.call.apply(method, [null, input[0]].concat(_toConsumableArray(args))) || input[0]);
+		},
+		"individual": function individual(method, input, args) {
+			return flatten(input.map(function (el) {
+				return method.call.apply(method, [null, el].concat(_toConsumableArray(args))) || el;
+			}));
+		}
+	} : _ref$oldInputParser;
+	var _ref$oldOutputParser = _ref.oldOutputParser;
+	var oldOutputParser = _ref$oldOutputParser === undefined ? {
+		"wrapped": function wrapped(wrapper, output, context) {
+			return wrapper(output || context.value);
+		},
+		"bare": function bare(wrapper, output, context) {
+			return output.length > 1 ? output : output[0];
+		},
+		"self": function self(wrapper, output, context) {
+			return wrapper(context.value);
+		},
+		"bare || self": function bareSelf(wrapper, output, context) {
+			return output.every(equals(undefined)) ? wrapper(context.value) : output.length > 1 ? output : output[0];
+		}
+	} : _ref$oldOutputParser;
 
-	var inputType = _clone.input;
-	var outputType = _clone.output;
+	var extendFn = function extendFn(methods, opts) {
+		var wrapper = this;
+		var extender = wrapper.extendFn;
+
+		var _clone = clone(extender.defaults, opts);
+
+		var inputType = _clone.input;
+		var outputType = _clone.output;
 
 
-	Object.keys(methods).forEach(function (methodName) {
+		Object.keys(methods).forEach(function (methodName) {
 
-		var method = methods[methodName];
-		var calcValue = isFunction(inputType) ? inputType : extender.inputParser[inputType] || extender.inputParser[extender.defaults.inputType];
-		var wrapValue = isFunction(outputType) ? outputType : extender.outputParser[outputType] || extender.outputParser[extender.defaults.outputType];
+			var method = methods[methodName];
+			var calcValue = isFunction(inputType) ? inputType : extender.inputParser[inputType] || extender.inputParser[extender.defaults.inputType];
+			var wrapValue = isFunction(outputType) ? outputType : extender.outputParser[outputType] || extender.outputParser[extender.defaults.outputType];
 
-		wrapper.fn[methodName] = function () {
-			var inputValue = arrify(this.value);
+			wrapper.fn[methodName] = function () {
+				var inputValue = arrify(this.value);
 
-			for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-				args[_key2] = arguments[_key2];
-			}
+				for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+					args[_key2] = arguments[_key2];
+				}
 
-			var outputValue = calcValue(method, inputValue, args);
-			return wrapValue(wrapper, outputValue, this);
-		};
-	});
-};
-extendFn.defaults = {
-	input: "individual",
-	output: "wrapped"
-};
-extendFn.inputParser = {
-	"array": function array(method, input, args) {
-		return flatten(method.call.apply(method, [null, input].concat(_toConsumableArray(args))) || input);
-	},
-	"single": function single(method, input, args) {
-		return flatten(method.call.apply(method, [null, input[0]].concat(_toConsumableArray(args))) || input[0]);
-	},
-	"individual": function individual(method, input, args) {
-		return flatten(input.map(function (el) {
-			return method.call.apply(method, [null, el].concat(_toConsumableArray(args))) || el;
-		}));
-	}
-};
-extendFn.outputParser = {
-	"wrapped": function wrapped(wrapper, output, context) {
-		return wrapper(output || context.value);
-	},
-	"bare": function bare(wrapper, output, context) {
-		return output.length > 1 ? output : output[0];
-	},
-	"self": function self(wrapper, output, context) {
-		return wrapper(context.value);
-	},
-	"bare || self": function bareSelf(wrapper, output, context) {
-		return output.every(equals(undefined)) ? wrapper(context.value) : output.length > 1 ? output : output[0];
-	}
+				var outputValue = calcValue(method, inputValue, args);
+				return wrapValue(this.wrapper, outputValue, this);
+			};
+		});
+
+		return wrapper;
+	};
+
+	extendFn.defaults = clone(oldDefaults);
+	extendFn.inputParser = clone(oldInputParser);
+	extendFn.outputParser = clone(oldOutputParser);
+	return extendFn;
 };
 
 //Function to add behavior to wrapper instance and attach methods to wrapper object;
-var extendWrapper = function extendWrapper(wrapper, name, methods, opts) {
+var extendWrapper = function extendWrapper(name, methods, opts) {
+	var wrapper = this;
 	var curr = name ? wrapper[name] || (wrapper[name] = {}) : wrapper;
 
 	Object.assign(curr, methods);
 	wrapper.extendFn(methods, opts);
+	return wrapper;
 };
 
 //Function to attach the original extension functions on the wrapper itself.
 var initializeExtenders = function initializeExtenders(wrapper, oldVersion) {
-	var extender = extendFn.bind(null, wrapper);
-
-	var oldExtender = oldVersion && oldVersion.extendFn || extendFn;
-	extender.defaults = clone(oldExtender.defaults);
-	extender.inputParser = clone(oldExtender.inputParser);
-	extender.outputParser = clone(oldExtender.outputParser);
+	var oldExtender = oldVersion && oldVersion.extendFn;
+	var extender = generateExtendFn(oldExtender);
 
 	wrapper.extendFn = extender;
-	wrapper.extendWrapper = extendWrapper.bind(null, wrapper);
+	wrapper.extendWrapper = extendWrapper;
 };
 
 //Function to add basic properties to wrapper
@@ -166,6 +180,7 @@ var initializeWrapper = function initializeWrapper(wrapper, oldVersion) {
 
 	wrapper.branch = factory;
 	wrapper.fn = clone(oldVersion.fn);
+	wrapper.fn.wrapper = wrapper;
 	initializeExtenders(wrapper, oldVersion);
 	wrapper.extendFn({
 		invoke: function invoke(el, methodName) {
@@ -181,11 +196,11 @@ var initializeWrapper = function initializeWrapper(wrapper, oldVersion) {
 };
 
 /* FACTORY FUNCTION */
-var factory = function factory(_ref) {
-	var _ref$parser = _ref.parser;
-	var parser = _ref$parser === undefined ? id : _ref$parser;
-	var _ref$oldVersion = _ref.oldVersion;
-	var oldVersion = _ref$oldVersion === undefined ? {} : _ref$oldVersion;
+var factory = function factory(_ref2) {
+	var _ref2$parser = _ref2.parser;
+	var parser = _ref2$parser === undefined ? id : _ref2$parser;
+	var _ref2$oldVersion = _ref2.oldVersion;
+	var oldVersion = _ref2$oldVersion === undefined ? {} : _ref2$oldVersion;
 
 	var wrapper = function wrapper(value) {
 		var parse = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : parser;
@@ -199,22 +214,17 @@ var factory = function factory(_ref) {
 
 var jzmn = factory({ parser: arrify, oldVersion: self.jzmn });
 
-jzmn.extendFn({
-	at: function at(list, n) {
+jzmn.extendFn({ at: function at(list, n) {
 		return list[n];
-	}
-}, {
-	input: "array"
-});
-jzmn.extendFn({
-	prop: function prop(el, p) {
+	} }, { input: "array" }).extendFn({ prop: function prop(el, p) {
 		return el[p];
-	}
-});
+	} }, { input: "individual", output: "bare" });
+
 jzmn.extendWrapper("util", {
-	flatten: flatten, arrify: arrify,
+	flatten: flatten, arrify: arrify
+}).extendWrapper("util", {
 	each: each, map: map, filter: filter, reduce: reduce
-});
+}, { input: "array" });
 
 var isNode = function isNode(n) {
 	return n.nodeType;
@@ -243,7 +253,7 @@ var changeClass = function changeClass(elems, cname, add) {
 	}
 
 	els.forEach(function (el) {
-		var test = isFunction$1(add) ? add(el, cname) : add;
+		var test = isFunction(add) ? add(el, cname) : add;
 		if (!isNode(el)) throw new TypeError("Element is not a node");
 		if (el.classList && cname.search(" ") < 0) el.classList[test ? "add" : "remove"](cname);else el.className = test ? el.className += " " + cname : el.className.replace(new RegExp('(^|\\b)' + cname.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
 	});
@@ -309,21 +319,6 @@ var createEl = function createEl(tag, attributes, children) {
 var domn = jzmn.branch({ oldVersion: jzmn, parser: function parser(el) {
 		return !el ? [] : isArray(el) ? el : el.nodeType ? [el] : isNodeList(el) ? arr.slice.call(el) : isString(el) ? arr.slice.call(document.querySelectorAll(el)) : [el];
 	} });
-
-domn.extendFn({
-	at: function at(list, n) {
-		return list[n];
-	}
-}, { input: "array" });
-domn.extendFn({ prop: function prop(el, p) {
-		return el[p];
-	} }, { input: "individual", output: "bare" });
-domn.extendWrapper("util", {
-	flatten: flatten, arrify: arrify
-});
-domn.extendWrapper("util", {
-	each: each, map: map, filter: filter, reduce: reduce
-}, { input: "array" });
 
 domn.extendWrapper("dom", {
 	find: function find(el, child) {

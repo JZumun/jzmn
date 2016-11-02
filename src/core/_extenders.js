@@ -1,61 +1,69 @@
-import { arrify, flatten, clone, equals } from "./_utils";
+import { arrify, flatten, clone, equals, isFunction } from "./_utils";
 
 //Function to add behavior to wrapper instance.
-const extendFn = function(wrapper,methods,opts) {
-	const extender = wrapper.extendFn;
-	const { input:inputType, output:outputType } = clone(extender.defaults,opts);
-
-	Object.keys(methods).forEach( methodName => {
-
-		const method = methods[methodName];
-		const calcValue = isFunction(inputType) ? inputType : extender.inputParser[inputType] || extender.inputParser[extender.defaults.inputType];
-		const wrapValue = isFunction(outputType) ? outputType : extender.outputParser[outputType] || extender.outputParser[extender.defaults.outputType];
-
-		wrapper.fn[methodName] = function(...args) {
-			const inputValue = arrify(this.value);
-			let outputValue = calcValue( method, inputValue, args );
-			return wrapValue( wrapper, outputValue, this );
+const generateExtendFn = ({
+		oldDefaults = {
+			input: "individual",
+			output: "wrapped"
+		}, 
+		oldInputParser = {
+			"array": 		(method,input,args) => flatten( method.call(null, input, ...args) || input),
+			"single": 		(method,input,args) => flatten( method.call(null, input[0], ...args) || input[0]),
+			"individual": 	(method,input,args) => flatten( input.map( el => method.call(null, el, ...args) || el) )
+		}, 
+		oldOutputParser = {
+			"wrapped": 		(wrapper,output,context) => wrapper(output || context.value),
+			"bare": 		(wrapper,output,context) => output.length > 1 ? output : output[0],
+			"self": 		(wrapper,output,context) => wrapper(context.value),
+			"bare || self": (wrapper,output,context) => output.every(equals(undefined)) ? wrapper(context.value) : output.length > 1 ? output : output[0]
 		}
-	});
+} = {}) => {
+	const extendFn = function(methods,opts) {
+		const wrapper = this;
+		const extender = wrapper.extendFn;
+		const { input:inputType, output:outputType } = clone(extender.defaults,opts);
 
+		Object.keys(methods).forEach( methodName => {
 
-}
-extendFn.defaults = {
-	input: "individual",
-	output: "wrapped"
+			const method = methods[methodName];
+			const calcValue = isFunction(inputType) ? inputType : extender.inputParser[inputType] || extender.inputParser[extender.defaults.inputType];
+			const wrapValue = isFunction(outputType) ? outputType : extender.outputParser[outputType] || extender.outputParser[extender.defaults.outputType];
+
+			wrapper.fn[methodName] = function(...args) {
+				const inputValue = arrify(this.value);
+				let outputValue = calcValue( method, inputValue, args );
+				return wrapValue( this.wrapper, outputValue, this );
+			}
+		});
+
+		return wrapper;
+	}
+
+	extendFn.defaults = clone(oldDefaults);
+	extendFn.inputParser = clone(oldInputParser);
+	extendFn.outputParser = clone(oldOutputParser);
+	return extendFn;
 };
-extendFn.inputParser = {
-	"array": 		(method,input,args) => flatten( method.call(null, input, ...args) || input),
-	"single": 		(method,input,args) => flatten( method.call(null, input[0], ...args) || input[0]),
-	"individual": 	(method,input,args) => flatten( input.map( el => method.call(null, el, ...args) || el) )
-};
-extendFn.outputParser = {
-	"wrapped": 		(wrapper,output,context) => wrapper(output || context.value),
-	"bare": 		(wrapper,output,context) => output.length > 1 ? output : output[0],
-	"self": 		(wrapper,output,context) => wrapper(context.value),
-	"bare || self": (wrapper,output,context) => output.every(equals(undefined)) ? wrapper(context.value) : output.length > 1 ? output : output[0]
-};
+
 
 //Function to add behavior to wrapper instance and attach methods to wrapper object;
-const extendWrapper = function(wrapper,name,methods,opts) {
+const extendWrapper = function(name,methods,opts) {
+	const wrapper = this;
 	const curr = (name) ? wrapper[name] || (wrapper[name] = {})
 						: wrapper;
 
 	Object.assign(curr,methods);
 	wrapper.extendFn(methods,opts);
+	return wrapper;
 }
 
 //Function to attach the original extension functions on the wrapper itself.
 const initializeExtenders = (wrapper,oldVersion) => {
-	const extender = extendFn.bind(null,wrapper);
-
-	const oldExtender = (oldVersion && oldVersion.extendFn) || extendFn;
-	extender.defaults = clone(oldExtender.defaults);
-	extender.inputParser = clone(oldExtender.inputParser);
-	extender.outputParser = clone(oldExtender.outputParser);
+	const oldExtender = (oldVersion && oldVersion.extendFn);
+	const extender = generateExtendFn(oldExtender);
 
 	wrapper.extendFn = extender;
-	wrapper.extendWrapper = extendWrapper.bind(null,wrapper);
+	wrapper.extendWrapper = extendWrapper;
 }
 
 export default initializeExtenders;
