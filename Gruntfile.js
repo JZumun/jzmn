@@ -1,23 +1,30 @@
 module.exports = function (grunt) {
+		const browserifyOptions = {
+				browserifyOptions: {
+						standalone: "jzmn"
+				},
+				transform: ["rollupify",["babelify",{
+						presets:["latest"],
+				}]]
+		}
     grunt.initConfig({
         browserify: {
-            development: {
+						jzmn: {
+							src: "./src/core/jzmn.js",
+							dest: "./dist/jzmn.es6.js",
+							options: browserifyOptions
+						},
+            domn: {
                 src: "./src/dom/domn.js",
                 dest: './dist/jzmn.dom.js',
-                options: {
-                    browserifyOptions: { 
-                        standalone: "jzmn"
-                    },
-                    transform: ["rollupify",["babelify",{
-                        presets:["latest"],
-                    }]]
-                }
+                options: browserifyOptions
             }
         },
         uglify: {
             development : {
                 files: {
-                    'dist/jzmn.dom.min.js': ['dist/jzmn.dom.js']
+                    'dist/jzmn.dom.min.js': ['dist/jzmn.dom.js'],
+										'dist/jzmn.es6.min.js': ['dist/jzmn.es6.js']
                 }
             }
         },

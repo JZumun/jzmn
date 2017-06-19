@@ -4,7 +4,7 @@
   "description": "Personal experimental utility library.",
   "main": "dist/jzmn.js",
   "scripts": {
-    "build": "browserify src/core/jzmn.js -o dist/jzmn.es6.js --s jzmn",
+    "build": "grunt build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

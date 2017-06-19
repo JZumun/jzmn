@@ -6,11 +6,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 var arr = Array.prototype;
 
 var arrify = function arrify(el) {
-	return el === undefined || el === null ? [] : typeof el !== 'function' && el.length ? arr.slice.call(el) : [el];
+	return el === undefined || el === null ? [] : typeof el !== 'function' && el.length !== undefined ? arr.slice.call(el) : [el];
 };
 
-var clone = function clone(x) {
-	return Object.assign({}, x);
+var clone = function clone() {
+	for (var _len = arguments.length, x = Array(_len), _key = 0; _key < _len; _key++) {
+		x[_key] = arguments[_key];
+	}
+
+	return Object.assign.apply(Object, [{}].concat(x));
 };
 
 var flatten = function flatten(obj) {
@@ -23,85 +27,106 @@ var id = function id(x) {
 	return x;
 };
 
+var equals = function equals(thing) {
+	return function (x) {
+		return x === thing;
+	};
+};
+var isFunction = function isFunction(n) {
+	return Object.prototype.toString.call(n) == '[object Function]';
+};
+
 //Function to add behavior to wrapper instance.
-var extendFn = function extendFn(wrapper, methods, opts) {
-	var extender = wrapper.extendFn;
+var generateExtendFn = function generateExtendFn() {
+	var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	var _clone = clone(extender.defaults, opts);
+	var _ref$defaults = _ref.defaults;
+	var defaults = _ref$defaults === undefined ? {
+		input: "individual",
+		output: "wrapped"
+	} : _ref$defaults;
+	var _ref$inputParser = _ref.inputParser;
+	var inputParser = _ref$inputParser === undefined ? {
+		"array": function array(method, input, args) {
+			return flatten(method.call.apply(method, [null, input].concat(_toConsumableArray(args))) || input);
+		},
+		"single": function single(method, input, args) {
+			return flatten(method.call.apply(method, [null, input[0]].concat(_toConsumableArray(args))) || input[0]);
+		},
+		"individual": function individual(method, input, args) {
+			return flatten(input.map(function (el) {
+				return method.call.apply(method, [null, el].concat(_toConsumableArray(args))) || el;
+			}));
+		}
+	} : _ref$inputParser;
+	var _ref$outputParser = _ref.outputParser;
+	var outputParser = _ref$outputParser === undefined ? {
+		"wrapped": function wrapped(wrapper, output, context) {
+			return wrapper(output || context.value);
+		},
+		"bare": function bare(wrapper, output, context) {
+			return output.length > 1 ? output : output[0];
+		},
+		"self": function self(wrapper, output, context) {
+			return wrapper(context.value);
+		},
+		"bare || self": function bareSelf(wrapper, output, context) {
+			return output.every(equals(undefined)) ? wrapper(context.value) : output.length > 1 ? output : output[0];
+		}
+	} : _ref$outputParser;
 
-	var inputType = _clone.input;
-	var outputType = _clone.output;
+	var extendFn = function extendFn(methods, opts) {
+		var wrapper = this;
+		var extender = wrapper.extendFn;
+
+		var _clone = clone(extender.defaults, opts);
+
+		var inputType = _clone.input;
+		var outputType = _clone.output;
 
 
-	Object.keys(methods).forEach(function (methodName) {
+		Object.keys(methods).forEach(function (methodName) {
 
-		var method = methods[methodName];
+			var method = methods[methodName];
+			var calcValue = isFunction(inputType) ? inputType : extender.inputParser[inputType] || extender.inputParser[extender.defaults.inputType];
+			var wrapValue = isFunction(outputType) ? outputType : extender.outputParser[outputType] || extender.outputParser[extender.defaults.outputType];
 
-		wrapper.fn[methodName] = function () {
-			var inputValue = arrify(this.value);
+			wrapper.fn[methodName] = function () {
+				var inputValue = arrify(this.value);
 
-			for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-				args[_key] = arguments[_key];
-			}
+				for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+					args[_key2] = arguments[_key2];
+				}
 
-			var outputValue = extender.inputParser[inputType](method, inputValue, args);
-			return extender.outputParser[outputType](wrapper, outputValue, this);
-		};
-	});
-};
-extendFn.defaults = {
-	input: "individual",
-	output: "wrapped"
-};
-extendFn.inputParser = {
-	"array": function array(method, input, args) {
-		return flatten(method.call.apply(method, [null, input].concat(_toConsumableArray(args))));
-	},
-	"single": function single(method, input, args) {
-		return flatten(method.call.apply(method, [null, input[0]].concat(_toConsumableArray(args))));
-	},
-	"individual": function individual(method, input, args) {
-		return flatten(input.map(function (el) {
-			return method.call.apply(method, [null, el].concat(_toConsumableArray(args)));
-		}));
-	}
-};
-extendFn.outputParser = {
-	"wrapped": function wrapped(wrapper, output, context) {
-		return wrapper(output || context.value);
-	},
-	"bare": function bare(wrapper, output, context) {
-		return output.length > 1 ? output : output[0];
-	},
-	"self": function self(wrapper, output, context) {
-		return wrapper(context.value);
-	},
-	"bare || self": function bareSelf(wrapper, output, context) {
-		return outputtable[output.every(function (el) {
-			return el === undefined;
-		}) ? "self" : "bare"](wrapper, output, context);
-	}
+				var outputValue = calcValue(method, inputValue, args);
+				return wrapValue(this.__wrapper__, outputValue, this);
+			};
+		});
+
+		return wrapper;
+	};
+
+	extendFn.defaults = clone(defaults);
+	extendFn.inputParser = clone(inputParser);
+	extendFn.outputParser = clone(outputParser);
+	return extendFn;
 };
 
 //Function to add behavior to wrapper instance and attach methods to wrapper object;
-var extendWrapper = function extendWrapper(wrapper, name, methods, opts) {
+var extendWrapper = function extendWrapper(name, methods, opts) {
+	var wrapper = this;
 	var curr = name ? wrapper[name] || (wrapper[name] = {}) : wrapper;
 
 	Object.assign(curr, methods);
 	wrapper.extendFn(methods, opts);
+	return wrapper;
 };
 
 //Function to attach the original extension functions on the wrapper itself.
 var initializeExtenders = function initializeExtenders(wrapper, oldVersion) {
-	var extender = extendFn.bind(null, wrapper);
-
-	var oldExtender = oldVersion && oldVersion.extendFn || extendFn;
-	extender.defaults = clone(oldExtender.defaults);
-	extender.inputParser = clone(oldExtender.inputParser);
-	extender.outputParser = clone(oldExtender.outputParser);
-
-	wrapper.extendFn = extender;
-	wrapper.extendWrapper = extendWrapper.bind(null, wrapper);
+	var oldExtender = oldVersion && oldVersion.extendFn;
+	wrapper.extendFn = generateExtendFn(oldExtender);
+	wrapper.extendWrapper = extendWrapper;
 };
 
 //Function to add basic properties to wrapper
@@ -110,26 +135,19 @@ var initializeWrapper = function initializeWrapper(wrapper, oldVersion) {
 
 	wrapper.branch = factory;
 	wrapper.fn = clone(oldVersion.fn);
+	wrapper.fn.__wrapper__ = wrapper;
 	initializeExtenders(wrapper, oldVersion);
-	wrapper.extendFn({
-		invoke: function invoke(el, methodName) {
-			for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-				args[_key2 - 2] = arguments[_key2];
-			}
-
-			return el[methodName].apply(el, args);
-		}
-	});
-
 	return wrapper;
 };
 
 /* FACTORY FUNCTION */
-var factory = function factory(_ref) {
-	var _ref$parser = _ref.parser;
-	var parser = _ref$parser === undefined ? id : _ref$parser;
-	var _ref$oldVersion = _ref.oldVersion;
-	var oldVersion = _ref$oldVersion === undefined ? {} : _ref$oldVersion;
+var factory = function factory() {
+	var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+	var _ref2$parser = _ref2.parser;
+	var parser = _ref2$parser === undefined ? id : _ref2$parser;
+	var _ref2$oldVersion = _ref2.oldVersion;
+	var oldVersion = _ref2$oldVersion === undefined ? this || {} : _ref2$oldVersion;
 
 	var wrapper = function wrapper(value) {
 		var parse = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : parser;
@@ -176,13 +194,23 @@ var reduce = function reduce(el, fn, def) {
 
 var jzmn = factory({ parser: arrify, oldVersion: self.jzmn });
 
-jzmn.extendFn({ at: function at(list, n) {
+jzmn.extendFn({ invoke: function invoke(el, methodName) {
+		for (var _len3 = arguments.length, args = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
+			args[_key3 - 2] = arguments[_key3];
+		}
+
+		return el[methodName].apply(el, args);
+	} }).extendFn({ at: function at(list, n) {
 		return list[n];
-	} });
+	} }, { input: "array" }).extendFn({ prop: function prop(el, p) {
+		return el[p];
+	} }, { input: "individual", output: "bare" });
+
 jzmn.extendWrapper("util", {
-	flatten: flatten, arrify: arrify,
+	flatten: flatten, arrify: arrify
+}).extendWrapper("util", {
 	each: each, map: map, filter: filter, reduce: reduce
-});
+}, { input: "array" });
 
 module.exports = jzmn;
 
