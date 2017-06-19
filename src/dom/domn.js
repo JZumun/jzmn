@@ -20,9 +20,7 @@ domn.extendWrapper("dom",{
 	find: (el,child) => arrify(el.querySelectorAll(child)),
 	ancestor: (el,parent) => parent ? element.closest(parent) : element.parentNode,
 	on: (el,event,callback) => el.addEventListener(event,callback)
-});
-
-domn.extendWrapper("dom",{
+}).extendWrapper("dom",{
 	matches: matchesQuery,
 	attr: (el,attr,value) => {
 		if (value !== undefined) (value === null) ? el.removeAttribute(attr) : el.setAttribute(attr);
@@ -36,9 +34,9 @@ domn.extendWrapper("dom",{
 
 
 domn.extendWrapper("dom",{ hasClass }, { output: "bare" });
-domn.extendWrapper("dom", { 
+domn.extendWrapper("dom", {
 	changeClass, toggleClass,
-	removeClass, addClass 
+	removeClass, addClass
 }, { input: "array"});
 
 // domn.extendWrapper("dom",{ on,delegate,off });
@@ -50,4 +48,3 @@ domn.el = (string) => document.querySelector(string);
 domn.els = (string) => document.querySelectorAll(string);
 
 export default domn;
-
