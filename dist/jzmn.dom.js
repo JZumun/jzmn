@@ -83,13 +83,13 @@ var reduce = function reduce(el, fn, def) {
 var generateExtendFn = function generateExtendFn() {
 	var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	var _ref$oldDefaults = _ref.oldDefaults;
-	var oldDefaults = _ref$oldDefaults === undefined ? {
+	var _ref$defaults = _ref.defaults;
+	var defaults = _ref$defaults === undefined ? {
 		input: "individual",
 		output: "wrapped"
-	} : _ref$oldDefaults;
-	var _ref$oldInputParser = _ref.oldInputParser;
-	var oldInputParser = _ref$oldInputParser === undefined ? {
+	} : _ref$defaults;
+	var _ref$inputParser = _ref.inputParser;
+	var inputParser = _ref$inputParser === undefined ? {
 		"array": function array(method, input, args) {
 			return flatten(method.call.apply(method, [null, input].concat(_toConsumableArray(args))) || input);
 		},
@@ -101,9 +101,9 @@ var generateExtendFn = function generateExtendFn() {
 				return method.call.apply(method, [null, el].concat(_toConsumableArray(args))) || el;
 			}));
 		}
-	} : _ref$oldInputParser;
-	var _ref$oldOutputParser = _ref.oldOutputParser;
-	var oldOutputParser = _ref$oldOutputParser === undefined ? {
+	} : _ref$inputParser;
+	var _ref$outputParser = _ref.outputParser;
+	var outputParser = _ref$outputParser === undefined ? {
 		"wrapped": function wrapped(wrapper, output, context) {
 			return wrapper(output || context.value);
 		},
@@ -116,7 +116,7 @@ var generateExtendFn = function generateExtendFn() {
 		"bare || self": function bareSelf(wrapper, output, context) {
 			return output.every(equals(undefined)) ? wrapper(context.value) : output.length > 1 ? output : output[0];
 		}
-	} : _ref$oldOutputParser;
+	} : _ref$outputParser;
 
 	var extendFn = function extendFn(methods, opts) {
 		var wrapper = this;
@@ -149,9 +149,9 @@ var generateExtendFn = function generateExtendFn() {
 		return wrapper;
 	};
 
-	extendFn.defaults = clone(oldDefaults);
-	extendFn.inputParser = clone(oldInputParser);
-	extendFn.outputParser = clone(oldOutputParser);
+	extendFn.defaults = clone(defaults);
+	extendFn.inputParser = clone(inputParser);
+	extendFn.outputParser = clone(outputParser);
 	return extendFn;
 };
 
@@ -168,9 +168,7 @@ var extendWrapper = function extendWrapper(name, methods, opts) {
 //Function to attach the original extension functions on the wrapper itself.
 var initializeExtenders = function initializeExtenders(wrapper, oldVersion) {
 	var oldExtender = oldVersion && oldVersion.extendFn;
-	var extender = generateExtendFn(oldExtender);
-
-	wrapper.extendFn = extender;
+	wrapper.extendFn = generateExtendFn(oldExtender);
 	wrapper.extendWrapper = extendWrapper;
 };
 
@@ -323,14 +321,12 @@ domn.extendWrapper("dom", {
 		return arrify(el.querySelectorAll(child));
 	},
 	ancestor: function ancestor(el, parent) {
-		return parent ? element.closest(parent) : element.parentNode;
+		return parent ? el.closest(parent) : el.parentNode;
 	},
 	on: function on(el, event, callback) {
 		return el.addEventListener(event, callback);
 	}
-});
-
-domn.extendWrapper("dom", {
+}).extendWrapper("dom", {
 	matches: matchesQuery,
 	attr: function attr(el, _attr, value) {
 		if (value !== undefined) value === null ? el.removeAttribute(_attr) : el.setAttribute(_attr);else return el.getAttribute(_attr);

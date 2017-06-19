@@ -18,7 +18,7 @@ const domn = jzmn.branch({oldVersion: jzmn, parser: function(el) {
 
 domn.extendWrapper("dom",{
 	find: (el,child) => arrify(el.querySelectorAll(child)),
-	ancestor: (el,parent) => parent ? element.closest(parent) : element.parentNode,
+	ancestor: (el,parent) => parent ? el.closest(parent) : el.parentNode,
 	on: (el,event,callback) => el.addEventListener(event,callback)
 }).extendWrapper("dom",{
 	matches: matchesQuery,
